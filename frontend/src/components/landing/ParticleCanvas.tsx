@@ -1,6 +1,5 @@
 'use client';
 import { useEffect, useRef } from 'react';
-import styles from './ParticleCanvas.module.css';
 
 export default function ParticleCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -51,5 +50,5 @@ export default function ParticleCanvas() {
     return () => { cancelAnimationFrame(animFrame); window.removeEventListener('resize', resize); };
   }, []);
 
-  return <canvas ref={canvasRef} className={styles.canvas} />;
+  return <canvas ref={canvasRef} className="fixed top-0 left-0 w-full h-full z-0 pointer-events-none opacity-40" />;
 }
