@@ -26,14 +26,20 @@ export const metadata: Metadata = {
   },
 };
 
+import { ThemeProvider } from "next-themes";
+
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${outfit.variable} ${inter.variable}`}>
-      <body>{children}</body>
+    <html lang="en" suppressHydrationWarning className={`${outfit.variable} ${inter.variable}`}>
+      <body>
+        <ThemeProvider attribute="class" defaultTheme="light">
+          {children}
+        </ThemeProvider>
+      </body>
     </html>
   );
 }
