@@ -1,4 +1,3 @@
-import dynamic from 'next/dynamic';
 import Navbar from '@/components/landing/Navbar';
 import HeroSection from '@/components/landing/HeroSection';
 import StatsSection from '@/components/landing/StatsSection';
@@ -10,8 +9,7 @@ import PricingSection from '@/components/landing/PricingSection';
 import TestimonialsSection from '@/components/landing/TestimonialsSection';
 import CtaSection from '@/components/landing/CtaSection';
 import Footer from '@/components/landing/Footer';
-
-const ParticleCanvas = dynamic(() => import('@/components/landing/ParticleCanvas'), { ssr: false });
+import ParticleCanvas from '@/components/landing/ParticleCanvas';
 
 export default function Home() {
   return (
