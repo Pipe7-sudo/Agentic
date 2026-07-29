@@ -6,25 +6,25 @@ const LINKS = {
 
 export default function Footer() {
   return (
-    <footer className="border-t border-white/[0.07] pt-16 pb-10">
+    <footer className="border-t border-slate-200 dark:border-white/[0.07] pt-16 pb-10 bg-white dark:bg-transparent">
       <div className="max-w-6xl mx-auto px-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
-          <div className="md:col-span-1">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-10 mb-12">
+          <div className="col-span-2 md:col-span-2">
             <div className="flex items-center gap-2.5 mb-4">
-              <div className="w-9 h-9 rounded-[10px] gradient-bg flex items-center justify-center text-lg shadow-[0_0_20px_rgba(99,102,241,0.4)]">⚡</div>
-              <span className="font-['Outfit'] text-[18px] font-bold text-slate-100 tracking-tight">WorkForce AI</span>
+              <div className="w-9 h-9 rounded-[10px] gradient-bg flex items-center justify-center text-lg shadow-[0_0_20px_rgba(99,102,241,0.4)] text-white">⚡</div>
+              <span className="font-['Outfit'] text-[18px] font-bold text-slate-900 dark:text-slate-100 tracking-tight">WorkForce AI</span>
             </div>
-            <p className="text-sm text-slate-400 leading-[1.7] max-w-[280px]">Africa&apos;s enterprise AI workforce platform. Pre-built agents that replace operational roles — without an IT team, without a long integration, and without risk.</p>
+            <p className="text-sm text-slate-600 dark:text-slate-400 leading-[1.7] max-w-[280px]">Africa&apos;s enterprise AI workforce platform. Pre-built agents that replace operational roles — without an IT team, without a long integration, and without risk.</p>
           </div>
           {Object.entries(LINKS).map(([title, links]) => (
-            <div key={title}>
-              <h4 className="text-[13px] font-semibold text-slate-100 mb-4">{title}</h4>
+            <div key={title} className="col-span-1">
+              <h4 className="text-[13px] font-semibold text-slate-900 dark:text-slate-100 mb-4">{title}</h4>
               <ul className="flex flex-col gap-2.5">
                 {links.map(l => {
                   const [label, hash] = l.split('#');
                   return (
                     <li key={label}>
-                      <a href={`#${hash}`} className="text-sm text-slate-400 no-underline hover:text-slate-100 transition-colors">{label}</a>
+                      <a href={`#${hash}`} className="text-sm text-slate-600 dark:text-slate-400 no-underline hover:text-indigo-600 dark:hover:text-slate-100 transition-colors">{label}</a>
                     </li>
                   );
                 })}
@@ -32,9 +32,9 @@ export default function Footer() {
             </div>
           ))}
         </div>
-        <div className="flex flex-col sm:flex-row items-center justify-between pt-7 border-t border-white/[0.07] gap-3">
-          <p className="text-[13px] text-slate-600">© 2026 WorkForce AI. All rights reserved.</p>
-          <div className="flex items-center gap-1.5 text-[13px] text-slate-600">
+        <div className="flex flex-col sm:flex-row items-center justify-between pt-7 border-t border-slate-200 dark:border-white/[0.07] gap-4 text-center sm:text-left">
+          <p className="text-[13px] text-slate-500 dark:text-slate-600">© 2026 WorkForce AI. All rights reserved.</p>
+          <div className="flex items-center gap-1.5 text-[13px] text-slate-500 dark:text-slate-600">
             🌍 Built in Lagos, Nigeria. Serving Africa.
           </div>
         </div>
