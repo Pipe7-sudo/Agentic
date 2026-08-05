@@ -49,8 +49,8 @@ export default function Navbar() {
               
               <div className="flex items-center gap-4 border-l border-slate-200 dark:border-white/[0.1] pl-6">
                 <ThemeSwitch />
-                <a href="#pricing" className="text-sm font-semibold text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-white transition-colors no-underline">Sign In</a>
-                <a href="#cta" className="px-5 py-2.5 rounded-lg text-sm font-semibold text-white gradient-bg shadow-[0_4px_24px_rgba(99,102,241,0.25)] dark:shadow-[0_4px_24px_rgba(99,102,241,0.35)] hover:-translate-y-px hover:shadow-[0_6px_32px_rgba(99,102,241,0.4)] dark:hover:shadow-[0_6px_32px_rgba(99,102,241,0.5)] transition-all no-underline">
+                <a href="/sign-in" className="text-sm font-semibold text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-white transition-colors no-underline">Sign In</a>
+                <a href="/sign-up" className="px-5 py-2.5 rounded-lg text-sm font-semibold text-white gradient-bg shadow-[0_4px_24px_rgba(99,102,241,0.25)] dark:shadow-[0_4px_24px_rgba(99,102,241,0.35)] hover:-translate-y-px hover:shadow-[0_6px_32px_rgba(99,102,241,0.4)] dark:hover:shadow-[0_6px_32px_rgba(99,102,241,0.5)] transition-all no-underline">
                   Book Demo →
                 </a>
               </div>
@@ -110,14 +110,14 @@ export default function Navbar() {
               
               <div className="mt-auto flex flex-col gap-4 pt-8 border-t border-slate-100 dark:border-white/[0.05]">
                 <a 
-                  href="#pricing" 
+                  href="/sign-in" 
                   onClick={() => setMobileMenuOpen(false)}
                   className="w-full py-4 text-center rounded-xl text-lg font-semibold bg-slate-100 dark:bg-white/[0.05] text-slate-900 dark:text-white"
                 >
                   Sign In
                 </a>
                 <a 
-                  href="#cta" 
+                  href="/sign-up" 
                   onClick={() => setMobileMenuOpen(false)}
                   className="w-full py-4 text-center rounded-xl text-lg font-semibold text-white gradient-bg shadow-[0_4px_24px_rgba(99,102,241,0.35)]"
                 >
