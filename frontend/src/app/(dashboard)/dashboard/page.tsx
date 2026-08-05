@@ -31,10 +31,10 @@ const typeStyle: Record<string, string> = {
 
 export default function DashboardPage() {
   return (
-    <div className="flex flex-col gap-6 max-w-[1200px] mx-auto">
+    <div className="flex flex-col gap-5 max-w-[1200px] mx-auto">
       {/* Greeting */}
       <div>
-        <h2 className="font-['Outfit'] text-[22px] font-bold text-slate-900 dark:text-white tracking-tight">Good evening, Demo 👋</h2>
+        <h2 className="font-['Outfit'] text-[20px] md:text-[22px] font-bold text-slate-900 dark:text-white tracking-tight">Good evening, Demo 👋</h2>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Here&apos;s what your AI workforce accomplished today.</p>
       </div>
 
