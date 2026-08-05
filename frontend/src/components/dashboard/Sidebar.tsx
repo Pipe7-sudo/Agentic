@@ -1,18 +1,18 @@
 'use client';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useState } from 'react';
 
 const NAV = [
-  { label: 'Overview',       icon: '📊', href: '/dashboard' },
-  { label: 'Agents',         icon: '🤖', href: '/agents' },
-  { label: 'Audit Log',      icon: '📋', href: '/audit-log' },
-  { label: 'Escalations',    icon: '⚠️', href: '/escalations', badge: 2 },
-  { label: 'Usage & Billing',icon: '💰', href: '/usage' },
-  { label: 'Settings',       icon: '⚙️', href: '/settings' },
+  { label: 'Overview',        icon: '📊', href: '/dashboard' },
+  { label: 'Agents',          icon: '🤖', href: '/agents' },
+  { label: 'Audit Log',       icon: '📋', href: '/audit-log' },
+  { label: 'Escalations',     icon: '⚠️', href: '/escalations', badge: 2 },
+  { label: 'Usage & Billing', icon: '💰', href: '/usage' },
+  { label: 'Settings',        icon: '⚙️', href: '/settings' },
 ];
 
-export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
+// ─── Desktop / Tablet Sidebar ─────────────────────────────────────────────────
+export function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -22,7 +22,7 @@ export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; o
   };
 
   return (
-    <aside className={`flex flex-col h-full bg-white dark:bg-[#080812] border-r border-slate-200 dark:border-white/[0.07] transition-all duration-300 ${collapsed ? 'w-[68px]' : 'w-[220px]'}`}>
+    <aside className={`hidden md:flex flex-col h-full bg-white dark:bg-[#080812] border-r border-slate-200 dark:border-white/[0.07] transition-all duration-300 shrink-0 ${collapsed ? 'w-[68px]' : 'w-[220px]'}`}>
       {/* Brand */}
       <div className={`flex items-center gap-2.5 p-4 border-b border-slate-100 dark:border-white/[0.05] shrink-0 ${collapsed ? 'justify-center' : ''}`}>
         <Link href="/" className="flex items-center gap-2.5 no-underline shrink-0">
@@ -34,7 +34,7 @@ export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; o
       {/* Collapse toggle */}
       <button
         onClick={onToggle}
-        className="mx-auto mt-3 mb-1 flex items-center justify-center w-7 h-7 rounded-lg border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.03] text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-all text-[11px]"
+        className="mx-auto mt-3 mb-1 flex items-center justify-center w-7 h-7 rounded-lg border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.03] text-slate-500 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-all text-[11px]"
       >
         {collapsed ? '→' : '←'}
       </button>
@@ -61,11 +61,9 @@ export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; o
               {collapsed && item.badge ? (
                 <span className="absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full" />
               ) : null}
-              {/* Tooltip when collapsed */}
               {collapsed && (
                 <span className="pointer-events-none absolute left-full ml-3 whitespace-nowrap bg-slate-900 dark:bg-slate-700 text-white text-[12px] px-2.5 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
-                  {item.label}
-                  {item.badge ? ` (${item.badge})` : ''}
+                  {item.label}{item.badge ? ` (${item.badge})` : ''}
                 </span>
               )}
             </Link>
@@ -77,7 +75,7 @@ export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; o
       <div className={`p-3 border-t border-slate-100 dark:border-white/[0.05] shrink-0 ${collapsed ? 'flex justify-center' : ''}`}>
         <button
           onClick={handleLogout}
-          className={`flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-[13px] font-medium text-slate-500 dark:text-slate-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-400 transition-all w-full ${collapsed ? 'justify-center' : ''}`}
+          className={`flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-[13px] font-medium text-slate-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-400 transition-all w-full ${collapsed ? 'justify-center' : ''}`}
         >
           <span className="text-base">🚪</span>
           {!collapsed && <span>Log Out</span>}
@@ -86,3 +84,36 @@ export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; o
     </aside>
   );
 }
+
+// ─── Mobile Bottom Tab Bar ─────────────────────────────────────────────────────
+export function MobileBottomNav() {
+  const pathname = usePathname();
+  // Show only 5 key items in bottom nav (hide Usage)
+  const items = NAV.filter(n => n.href !== '/usage');
+
+  return (
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-[#080812] border-t border-slate-200 dark:border-white/[0.07] flex items-center safe-bottom shadow-[0_-4px_20px_rgba(0,0,0,0.06)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.4)]">
+      {items.map(item => {
+        const active = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={`flex-1 flex flex-col items-center justify-center py-2.5 relative no-underline transition-all ${
+              active ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 dark:text-slate-500'
+            }`}
+          >
+            <span className={`text-xl mb-0.5 transition-transform ${active ? 'scale-110' : ''}`}>{item.icon}</span>
+            <span className="text-[10px] font-medium leading-none">{item.label.split(' ')[0]}</span>
+            {item.badge && (
+              <span className="absolute top-1.5 right-[calc(50%-10px)] w-4 h-4 bg-rose-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">{item.badge}</span>
+            )}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
+// Default export for backward compatibility
+export default Sidebar;
