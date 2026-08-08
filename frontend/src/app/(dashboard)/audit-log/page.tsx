@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { Search, SlidersHorizontal, CheckCircle, AlertTriangle, Info, ChevronDown, ChevronUp } from 'lucide-react';
 
 const LOGS = [
   { id: 'EVT-0041', time: '18:04', agent: 'Invoice Guard',    action: 'AUTO_APPROVE', detail: 'Invoice #INV-8821 approved — ₦120,000 within policy limit', type: 'success' },
@@ -14,13 +15,10 @@ const LOGS = [
   { id: 'EVT-0032', time: '16:22', agent: 'Onboarding Bot',   action: 'PAUSE',        detail: 'Agent paused by admin — manual override via dashboard', type: 'info' },
 ];
 
-const TYPE_STYLES: Record<string, string> = {
-  success: 'bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400',
-  warning: 'bg-amber-100 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400',
-  info:    'bg-indigo-100 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-400',
-};
-const DOT: Record<string, string> = {
-  success: 'bg-emerald-500', warning: 'bg-amber-400', info: 'bg-indigo-500',
+const TYPE_CONFIG: Record<string, { style: string; dot: string; Icon: React.ElementType }> = {
+  success: { style: 'bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400', dot: 'bg-emerald-500', Icon: CheckCircle },
+  warning: { style: 'bg-amber-100 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400',         dot: 'bg-amber-400',   Icon: AlertTriangle },
+  info:    { style: 'bg-indigo-100 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-400',      dot: 'bg-indigo-500',  Icon: Info },
 };
 
 const AGENTS  = ['All Agents',  'Invoice Guard', 'HR Scout', 'Support Agent', 'Compliance Scout', 'Finance Ops', 'Onboarding Bot'];
@@ -42,90 +40,111 @@ export default function AuditLogPage() {
     <div className="max-w-[1100px] mx-auto flex flex-col gap-4">
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
-        <input
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Search events…"
-          className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/[0.07] bg-white dark:bg-[#080812] text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-sm dark:shadow-none"
-        />
+        <div className="flex-1 flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/[0.07] bg-white dark:bg-[#080812] shadow-sm dark:shadow-none focus-within:ring-2 focus-within:ring-indigo-500/30 transition-all">
+          <Search size={14} className="text-slate-400 shrink-0" />
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search events…"
+            className="w-full bg-transparent text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none"
+          />
+        </div>
         <div className="flex gap-2">
           <select value={agent} onChange={e => setAgent(e.target.value)}
-            className="flex-1 sm:flex-none px-3 py-2.5 rounded-xl border border-slate-200 dark:border-white/[0.07] bg-white dark:bg-[#080812] text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-sm dark:shadow-none">
+            className="flex-1 sm:flex-none px-3 py-2.5 rounded-xl border border-slate-200 dark:border-white/[0.07] bg-white dark:bg-[#080812] text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 shadow-sm dark:shadow-none">
             {AGENTS.map(a => <option key={a}>{a}</option>)}
           </select>
           <select value={action} onChange={e => setAction(e.target.value)}
-            className="flex-1 sm:flex-none px-3 py-2.5 rounded-xl border border-slate-200 dark:border-white/[0.07] bg-white dark:bg-[#080812] text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-sm dark:shadow-none">
+            className="flex-1 sm:flex-none px-3 py-2.5 rounded-xl border border-slate-200 dark:border-white/[0.07] bg-white dark:bg-[#080812] text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 shadow-sm dark:shadow-none">
             {ACTIONS.map(a => <option key={a}>{a}</option>)}
           </select>
         </div>
-        <span className="text-[13px] text-slate-500 self-center">{filtered.length} events</span>
+        <span className="flex items-center gap-1.5 text-[12px] text-slate-400 dark:text-slate-600 self-center">
+          <SlidersHorizontal size={12} />
+          {filtered.length} events
+        </span>
       </div>
 
-      {/* ── Mobile card list (< md) ─────────────────────────────── */}
+      {/* Mobile card list */}
       <div className="md:hidden flex flex-col gap-3">
         {filtered.length === 0 && (
-          <div className="py-12 text-center text-sm text-slate-400 dark:text-slate-600 bg-white dark:bg-[#080812] border border-slate-200 dark:border-white/[0.07] rounded-2xl">No events match your filters.</div>
+          <div className="py-12 text-center text-sm text-slate-400 bg-white dark:bg-[#080812] border border-slate-200 dark:border-white/[0.07] rounded-2xl">No events match your filters.</div>
         )}
-        {filtered.map(l => (
-          <div key={l.id}
-            onClick={() => setExpanded(expanded === l.id ? null : l.id)}
-            className="bg-white dark:bg-[#080812] border border-slate-200 dark:border-white/[0.07] rounded-2xl p-4 shadow-sm dark:shadow-none cursor-pointer">
-            <div className="flex items-start justify-between gap-3 mb-2">
-              <div className="flex items-center gap-2">
-                <span className={`w-2 h-2 rounded-full shrink-0 mt-0.5 ${DOT[l.type]}`} />
-                <span className="text-[13px] font-semibold text-slate-800 dark:text-slate-200">{l.agent}</span>
+        {filtered.map(l => {
+          const cfg = TYPE_CONFIG[l.type];
+          return (
+            <div key={l.id}
+              onClick={() => setExpanded(expanded === l.id ? null : l.id)}
+              className="bg-white dark:bg-[#080812] border border-slate-200 dark:border-white/[0.07] rounded-2xl p-4 shadow-sm dark:shadow-none cursor-pointer">
+              <div className="flex items-start justify-between gap-3 mb-2">
+                <div className="flex items-center gap-2">
+                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 mt-1 ${cfg.dot}`} />
+                  <span className="text-[13px] font-semibold text-slate-800 dark:text-slate-200">{l.agent}</span>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${cfg.style}`}>{l.action}</span>
+                  <span className="text-[11px] text-slate-400 font-mono">{l.time}</span>
+                </div>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${TYPE_STYLES[l.type]}`}>{l.action}</span>
-                <span className="text-[11px] text-slate-400 font-mono">{l.time}</span>
-              </div>
+              <p className="text-[12px] text-slate-500 dark:text-slate-400 leading-[1.5] ml-3.5">{l.detail}</p>
+              {expanded === l.id && (
+                <div className="mt-3 pt-3 border-t border-slate-100 dark:border-white/[0.05] flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-500 ml-3.5">
+                  <span>ID: <strong className="text-slate-700 dark:text-slate-300 font-mono">{l.id}</strong></span>
+                  <span>Time: <strong className="text-slate-700 dark:text-slate-300">{l.time} today</strong></span>
+                </div>
+              )}
             </div>
-            <p className="text-[12px] text-slate-500 dark:text-slate-400 leading-[1.5] ml-4">{l.detail}</p>
-            {expanded === l.id && (
-              <div className="mt-3 pt-3 border-t border-slate-100 dark:border-white/[0.05] flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-500 ml-4">
-                <span>ID: <strong className="text-slate-700 dark:text-slate-300">{l.id}</strong></span>
-                <span>Time: <strong className="text-slate-700 dark:text-slate-300">{l.time} today</strong></span>
-              </div>
-            )}
-          </div>
-        ))}
+          );
+        })}
       </div>
 
-      {/* ── Desktop table (md+) ─────────────────────────────────── */}
+      {/* Desktop table */}
       <div className="hidden md:block bg-white dark:bg-[#080812] border border-slate-200 dark:border-white/[0.07] rounded-2xl shadow-sm dark:shadow-none overflow-hidden">
-        <div className="grid grid-cols-[80px_70px_150px_110px_1fr] gap-3 px-5 py-3 border-b border-slate-100 dark:border-white/[0.05] text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-600">
-          <span>Event ID</span><span>Time</span><span>Agent</span><span>Action</span><span>Detail</span>
+        {/* Column headers */}
+        <div className="grid grid-cols-[90px_64px_160px_120px_1fr_24px] gap-3 px-5 py-3 border-b border-slate-100 dark:border-white/[0.05] text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-600">
+          <span>Event ID</span><span>Time</span><span>Agent</span><span>Action</span><span>Detail</span><span></span>
         </div>
         {filtered.length === 0 && (
           <div className="py-16 text-center text-sm text-slate-400 dark:text-slate-600">No events match your filters.</div>
         )}
-        {filtered.map(l => (
-          <div key={l.id}>
-            <div
-              onClick={() => setExpanded(expanded === l.id ? null : l.id)}
-              className="grid grid-cols-[80px_70px_150px_110px_1fr] gap-3 px-5 py-3.5 border-b border-slate-50 dark:border-white/[0.03] hover:bg-slate-50 dark:hover:bg-white/[0.02] cursor-pointer items-center"
-            >
-              <span className="text-[12px] font-mono text-slate-500">{l.id}</span>
-              <span className="text-[12px] text-slate-500 font-mono">{l.time}</span>
-              <div className="flex items-center gap-1.5">
-                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${DOT[l.type]}`} />
-                <span className="text-[13px] text-slate-700 dark:text-slate-300 font-medium truncate">{l.agent}</span>
-              </div>
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full w-fit ${TYPE_STYLES[l.type]}`}>{l.action}</span>
-              <span className="text-[12px] text-slate-600 dark:text-slate-400 truncate">{l.detail}</span>
-            </div>
-            {expanded === l.id && (
-              <div className="px-5 py-4 bg-slate-50 dark:bg-white/[0.02] border-b border-slate-100 dark:border-white/[0.05]">
-                <p className="text-[13px] text-slate-700 dark:text-slate-300 leading-[1.6] mb-2">{l.detail}</p>
-                <div className="flex flex-wrap gap-4 text-[11px] text-slate-500">
-                  <span>Agent: <strong className="text-slate-700 dark:text-slate-300">{l.agent}</strong></span>
-                  <span>Event: <strong className="text-slate-700 dark:text-slate-300">{l.id}</strong></span>
-                  <span>Time: <strong className="text-slate-700 dark:text-slate-300">{l.time} today</strong></span>
+        {filtered.map(l => {
+          const cfg = TYPE_CONFIG[l.type];
+          const isOpen = expanded === l.id;
+          return (
+            <div key={l.id} className="border-b border-slate-50 dark:border-white/[0.03] last:border-0">
+              <div
+                onClick={() => setExpanded(isOpen ? null : l.id)}
+                className="grid grid-cols-[90px_64px_160px_120px_1fr_24px] gap-3 px-5 py-3.5 hover:bg-slate-50 dark:hover:bg-white/[0.02] cursor-pointer items-center"
+              >
+                <span className="text-[12px] font-mono text-slate-400 dark:text-slate-600">{l.id}</span>
+                <span className="text-[12px] text-slate-400 dark:text-slate-600 font-mono">{l.time}</span>
+                <div className="flex items-center gap-2">
+                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${cfg.dot}`} />
+                  <span className="text-[13px] text-slate-700 dark:text-slate-300 font-medium truncate">{l.agent}</span>
                 </div>
+                <span className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full w-fit ${cfg.style}`}>
+                  <cfg.Icon size={10} />
+                  {l.action}
+                </span>
+                <span className="text-[12px] text-slate-500 dark:text-slate-400 truncate">{l.detail}</span>
+                {isOpen ? <ChevronUp size={14} className="text-slate-400" /> : <ChevronDown size={14} className="text-slate-400" />}
               </div>
-            )}
-          </div>
-        ))}
+              {isOpen && (
+                <div className="px-5 py-4 bg-slate-50 dark:bg-white/[0.02] border-t border-slate-100 dark:border-white/[0.05]">
+                  <p className="text-[13px] text-slate-700 dark:text-slate-300 leading-[1.6] mb-3">{l.detail}</p>
+                  <div className="flex flex-wrap gap-6 text-[12px]">
+                    <div><span className="text-slate-400 dark:text-slate-600">Agent</span><br/><strong className="text-slate-700 dark:text-slate-300">{l.agent}</strong></div>
+                    <div><span className="text-slate-400 dark:text-slate-600">Event ID</span><br/><strong className="text-slate-700 dark:text-slate-300 font-mono">{l.id}</strong></div>
+                    <div><span className="text-slate-400 dark:text-slate-600">Time</span><br/><strong className="text-slate-700 dark:text-slate-300">{l.time} today</strong></div>
+                    <div><span className="text-slate-400 dark:text-slate-600">Type</span><br/>
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${cfg.style}`}>{l.action}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
