@@ -2,9 +2,11 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { Eye, EyeOff, AlertCircle } from 'lucide-react';
 
 const strengthLabels = ['', 'Weak', 'Fair', 'Good', 'Strong'];
 const strengthColors = ['', 'bg-rose-500', 'bg-amber-400', 'bg-blue-500', 'bg-emerald-500'];
+const strengthText   = ['', 'text-rose-600 dark:text-rose-400', 'text-amber-600 dark:text-amber-400', 'text-blue-600 dark:text-blue-400', 'text-emerald-600 dark:text-emerald-400'];
 
 function getStrength(pw: string): number {
   let score = 0;
@@ -14,35 +16,73 @@ function getStrength(pw: string): number {
   if (/[^A-Za-z0-9]/.test(pw)) score++;
   return score;
 }
+function isValidEmail(e: string) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
+
+type Fields = 'name' | 'email' | 'company' | 'password';
 
 export default function SignUpPage() {
   const router = useRouter();
-  const [form, setForm] = useState({ name: '', email: '', company: '', password: '' });
-  const [agreed, setAgreed] = useState(false);
+  const [form,    setForm]    = useState({ name: '', email: '', company: '', password: '' });
+  const [showPw,  setShowPw]  = useState(false);
+  const [agreed,  setAgreed]  = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [touched, setTouched] = useState<Partial<Record<Fields, boolean>>>({});
+  const [errors,  setErrors]  = useState<Partial<Record<Fields | 'terms', string>>>({});
   const strength = getStrength(form.password);
 
-  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
-    setForm(prev => ({ ...prev, [k]: e.target.value }));
+  const set = (k: Fields) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setForm(prev => ({ ...prev, [k]: val }));
+    if (touched[k]) setErrors(er => ({ ...er, [k]: validate(k, val) }));
+  };
+
+  const validate = (k: Fields, val: string): string | undefined => {
+    if (k === 'name')     return val.trim().length < 2 ? 'Full name is required' : undefined;
+    if (k === 'company')  return !val.trim() ? 'Company name is required' : undefined;
+    if (k === 'email')    return !val ? 'Email is required' : !isValidEmail(val) ? 'Enter a valid email address' : undefined;
+    if (k === 'password') return !val ? 'Password is required' : val.length < 8 ? 'Password must be at least 8 characters' : undefined;
+  };
+
+  const handleBlur = (k: Fields) => {
+    setTouched(t => ({ ...t, [k]: true }));
+    setErrors(e => ({ ...e, [k]: validate(k, form[k]) }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    if (!form.name || !form.email || !form.company || !form.password) {
-      setError('Please fill in all fields.'); return;
-    }
-    if (!agreed) { setError('Please accept the Terms of Service.'); return; }
-    if (strength < 2) { setError('Please choose a stronger password.'); return; }
+    const fields: Fields[] = ['name', 'email', 'company', 'password'];
+    const newErrors: typeof errors = {};
+    fields.forEach(k => { const err = validate(k, form[k]); if (err) newErrors[k] = err; });
+    if (!agreed) newErrors.terms = 'Please accept the Terms of Service.';
+    setTouched({ name: true, email: true, company: true, password: true });
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) return;
+
     setLoading(true);
     await new Promise(r => setTimeout(r, 1200));
     localStorage.setItem('wf_session', JSON.stringify({ email: form.email, name: form.name }));
-    router.push('/dashboard');
+    // Mark as new user → send to onboarding
+    localStorage.setItem('wf_onboarding', '1');
+    router.push('/onboarding');
   };
+
+  const fieldClass = (k: Fields) =>
+    `w-full px-4 py-2.5 rounded-xl border text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 transition-all bg-white dark:bg-white/[0.03] ${
+      touched[k] && errors[k]
+        ? 'border-rose-400 dark:border-rose-500/50 focus:ring-rose-500/30'
+        : 'border-slate-200 dark:border-white/[0.07] focus:ring-indigo-500/50 focus:border-indigo-400 dark:focus:border-indigo-500'
+    }`;
+
+  const FieldError = ({ k }: { k: Fields }) =>
+    touched[k] && errors[k] ? (
+      <p className="flex items-center gap-1 mt-1.5 text-[12px] text-rose-600 dark:text-rose-400">
+        <AlertCircle size={11} /> {errors[k]}
+      </p>
+    ) : null;
 
   return (
     <>
-      <div className="mb-7">
+      <div className="mb-6">
         <h1 className="font-['Outfit'] text-[26px] font-bold text-slate-900 dark:text-white tracking-tight mb-1">Create your account</h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">Deploy your AI workforce in 24 hours.</p>
       </div>
@@ -64,31 +104,40 @@ export default function SignUpPage() {
         <div className="flex-1 h-px bg-slate-200 dark:bg-white/[0.07]" />
       </div>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        {error && (
-          <div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 text-sm px-4 py-3 rounded-xl">{error}</div>
-        )}
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="block text-[13px] font-medium text-slate-700 dark:text-slate-300 mb-1.5">Full Name</label>
-            <input type="text" value={form.name} onChange={set('name')} placeholder="Ada Okafor"
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/[0.07] bg-white dark:bg-white/[0.03] text-slate-900 dark:text-white text-sm placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-400 transition-all" />
+            <input type="text" value={form.name} onChange={set('name')} onBlur={() => handleBlur('name')}
+              placeholder="Ada Okafor" className={fieldClass('name')} />
+            <FieldError k="name" />
           </div>
           <div>
             <label className="block text-[13px] font-medium text-slate-700 dark:text-slate-300 mb-1.5">Company</label>
-            <input type="text" value={form.company} onChange={set('company')} placeholder="Acme Ltd."
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/[0.07] bg-white dark:bg-white/[0.03] text-slate-900 dark:text-white text-sm placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-400 transition-all" />
+            <input type="text" value={form.company} onChange={set('company')} onBlur={() => handleBlur('company')}
+              placeholder="Acme Ltd." className={fieldClass('company')} />
+            <FieldError k="company" />
           </div>
         </div>
+
         <div>
           <label className="block text-[13px] font-medium text-slate-700 dark:text-slate-300 mb-1.5">Work Email</label>
-          <input type="email" value={form.email} onChange={set('email')} placeholder="you@company.com"
-            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/[0.07] bg-white dark:bg-white/[0.03] text-slate-900 dark:text-white text-sm placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-400 transition-all" />
+          <input type="email" value={form.email} onChange={set('email')} onBlur={() => handleBlur('email')}
+            placeholder="you@company.com" className={fieldClass('email')} />
+          <FieldError k="email" />
         </div>
+
         <div>
           <label className="block text-[13px] font-medium text-slate-700 dark:text-slate-300 mb-1.5">Password</label>
-          <input type="password" value={form.password} onChange={set('password')} placeholder="Min. 8 characters"
-            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/[0.07] bg-white dark:bg-white/[0.03] text-slate-900 dark:text-white text-sm placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-400 transition-all" />
+          <div className="relative">
+            <input type={showPw ? 'text' : 'password'} value={form.password} onChange={set('password')} onBlur={() => handleBlur('password')}
+              placeholder="Min. 8 characters" className={fieldClass('password') + ' pr-11'} />
+            <button type="button" onClick={() => setShowPw(s => !s)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+              {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
+            </button>
+          </div>
+          <FieldError k="password" />
           {form.password && (
             <div className="mt-2 flex items-center gap-2">
               <div className="flex gap-1 flex-1">
@@ -96,22 +145,27 @@ export default function SignUpPage() {
                   <div key={i} className={`h-1 flex-1 rounded-full transition-all ${strength >= i ? strengthColors[strength] : 'bg-slate-200 dark:bg-white/10'}`} />
                 ))}
               </div>
-              <span className={`text-[11px] font-medium ${strength >= 3 ? 'text-emerald-600 dark:text-emerald-400' : strength >= 2 ? 'text-blue-500' : 'text-amber-500'}`}>
-                {strengthLabels[strength]}
-              </span>
+              <span className={`text-[11px] font-medium ${strengthText[strength]}`}>{strengthLabels[strength]}</span>
             </div>
           )}
         </div>
-        <div className="flex items-start gap-2">
-          <input id="terms" type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)}
-            className="w-4 h-4 mt-0.5 rounded border-slate-300 dark:border-white/20 accent-indigo-600 shrink-0" />
-          <label htmlFor="terms" className="text-[13px] text-slate-600 dark:text-slate-400 leading-[1.5] cursor-pointer">
-            I agree to the{' '}
-            <a href="#" className="text-indigo-600 dark:text-indigo-400 hover:underline">Terms of Service</a>
-            {' '}and{' '}
-            <a href="#" className="text-indigo-600 dark:text-indigo-400 hover:underline">Privacy Policy</a>
-          </label>
+
+        <div>
+          <div className="flex items-start gap-2">
+            <input id="terms" type="checkbox" checked={agreed} onChange={e => { setAgreed(e.target.checked); if (errors.terms) setErrors(er => ({ ...er, terms: undefined })); }}
+              className="w-4 h-4 mt-0.5 rounded border-slate-300 dark:border-white/20 accent-indigo-600 shrink-0" />
+            <label htmlFor="terms" className="text-[13px] text-slate-600 dark:text-slate-400 leading-[1.5] cursor-pointer">
+              I agree to the{' '}<a href="#" className="text-indigo-600 dark:text-indigo-400 hover:underline">Terms of Service</a>{' '}and{' '}
+              <a href="#" className="text-indigo-600 dark:text-indigo-400 hover:underline">Privacy Policy</a>
+            </label>
+          </div>
+          {errors.terms && (
+            <p className="flex items-center gap-1 mt-1.5 text-[12px] text-rose-600 dark:text-rose-400">
+              <AlertCircle size={11} /> {errors.terms}
+            </p>
+          )}
         </div>
+
         <button type="submit" disabled={loading}
           className="w-full py-3 rounded-xl text-sm font-semibold text-white gradient-bg shadow-[0_4px_20px_rgba(99,102,241,0.3)] hover:shadow-[0_6px_28px_rgba(99,102,241,0.45)] hover:-translate-y-px transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none mt-1">
           {loading ? (
