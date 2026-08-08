@@ -2,25 +2,54 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { Eye, EyeOff, AlertCircle } from 'lucide-react';
+
+function isValidEmail(e: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+}
 
 export default function SignInPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
+  const [email,    setEmail]    = useState('');
   const [password, setPassword] = useState('');
+  const [showPw,   setShowPw]   = useState(false);
   const [remember, setRemember] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [loading,  setLoading]  = useState(false);
+  const [errors,   setErrors]   = useState<{ email?: string; password?: string; form?: string }>({});
+  const [touched,  setTouched]  = useState<{ email?: boolean; password?: boolean }>({});
+
+  const validateEmail    = (v: string) => !v ? 'Email is required' : !isValidEmail(v) ? 'Enter a valid email address' : undefined;
+  const validatePassword = (v: string) => !v ? 'Password is required' : v.length < 6 ? 'Password must be at least 6 characters' : undefined;
+
+  const handleBlur = (field: 'email' | 'password') => {
+    setTouched(t => ({ ...t, [field]: true }));
+    setErrors(e => ({
+      ...e,
+      [field]: field === 'email' ? validateEmail(email) : validatePassword(password),
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    if (!email || !password) { setError('Please fill in all fields.'); return; }
+    const emailErr = validateEmail(email);
+    const pwErr    = validatePassword(password);
+    setTouched({ email: true, password: true });
+    setErrors({ email: emailErr, password: pwErr });
+    if (emailErr || pwErr) return;
+
+    setErrors({});
     setLoading(true);
-    // Simulate auth delay
     await new Promise(r => setTimeout(r, 1000));
     localStorage.setItem('wf_session', JSON.stringify({ email, name: 'Demo User' }));
     router.push('/dashboard');
   };
+
+  const fieldClass = (err?: string, touch?: boolean) =>
+    `w-full px-4 py-2.5 rounded-xl border text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 transition-all bg-white dark:bg-white/[0.03] ${
+      touch && err
+        ? 'border-rose-400 dark:border-rose-500/50 focus:ring-rose-500/30'
+        : 'border-slate-200 dark:border-white/[0.07] focus:ring-indigo-500/50 focus:border-indigo-400 dark:focus:border-indigo-500'
+    }`;
 
   return (
     <>
@@ -46,48 +75,67 @@ export default function SignInPage() {
         <div className="flex-1 h-px bg-slate-200 dark:bg-white/[0.07]" />
       </div>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        {error && (
-          <div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 text-sm px-4 py-3 rounded-xl">{error}</div>
-        )}
+      {errors.form && (
+        <div className="flex items-center gap-2 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 text-sm px-4 py-3 rounded-xl mb-4">
+          <AlertCircle size={14} className="shrink-0" /> {errors.form}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
+        {/* Email */}
         <div>
           <label className="block text-[13px] font-medium text-slate-700 dark:text-slate-300 mb-1.5">Work Email</label>
           <input
             type="email"
             value={email}
-            onChange={e => setEmail(e.target.value)}
+            onChange={e => { setEmail(e.target.value); if (touched.email) setErrors(er => ({ ...er, email: validateEmail(e.target.value) })); }}
+            onBlur={() => handleBlur('email')}
             placeholder="you@company.com"
-            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/[0.07] bg-white dark:bg-white/[0.03] text-slate-900 dark:text-white text-sm placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-400 dark:focus:border-indigo-500 transition-all"
+            className={fieldClass(errors.email, touched.email)}
           />
+          {touched.email && errors.email && (
+            <p className="flex items-center gap-1 mt-1.5 text-[12px] text-rose-600 dark:text-rose-400">
+              <AlertCircle size={11} /> {errors.email}
+            </p>
+          )}
         </div>
+
+        {/* Password */}
         <div>
           <div className="flex items-center justify-between mb-1.5">
             <label className="block text-[13px] font-medium text-slate-700 dark:text-slate-300">Password</label>
             <Link href="/forgot-password" className="text-[12px] text-indigo-600 dark:text-indigo-400 hover:underline no-underline">Forgot password?</Link>
           </div>
-          <input
-            type="password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            placeholder="••••••••"
-            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/[0.07] bg-white dark:bg-white/[0.03] text-slate-900 dark:text-white text-sm placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-400 dark:focus:border-indigo-500 transition-all"
-          />
+          <div className="relative">
+            <input
+              type={showPw ? 'text' : 'password'}
+              value={password}
+              onChange={e => { setPassword(e.target.value); if (touched.password) setErrors(er => ({ ...er, password: validatePassword(e.target.value) })); }}
+              onBlur={() => handleBlur('password')}
+              placeholder="••••••••"
+              className={fieldClass(errors.password, touched.password) + ' pr-11'}
+            />
+            <button type="button" onClick={() => setShowPw(s => !s)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+              {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
+            </button>
+          </div>
+          {touched.password && errors.password && (
+            <p className="flex items-center gap-1 mt-1.5 text-[12px] text-rose-600 dark:text-rose-400">
+              <AlertCircle size={11} /> {errors.password}
+            </p>
+          )}
         </div>
+
+        {/* Remember me */}
         <div className="flex items-center gap-2">
-          <input
-            id="remember"
-            type="checkbox"
-            checked={remember}
-            onChange={e => setRemember(e.target.checked)}
-            className="w-4 h-4 rounded border-slate-300 dark:border-white/20 accent-indigo-600"
-          />
+          <input id="remember" type="checkbox" checked={remember} onChange={e => setRemember(e.target.checked)}
+            className="w-4 h-4 rounded border-slate-300 dark:border-white/20 accent-indigo-600" />
           <label htmlFor="remember" className="text-[13px] text-slate-600 dark:text-slate-400 cursor-pointer">Remember me for 30 days</label>
         </div>
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full py-3 rounded-xl text-sm font-semibold text-white gradient-bg shadow-[0_4px_20px_rgba(99,102,241,0.3)] hover:shadow-[0_6px_28px_rgba(99,102,241,0.45)] hover:-translate-y-px transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none mt-1"
-        >
+
+        <button type="submit" disabled={loading}
+          className="w-full py-3 rounded-xl text-sm font-semibold text-white gradient-bg shadow-[0_4px_20px_rgba(99,102,241,0.3)] hover:shadow-[0_6px_28px_rgba(99,102,241,0.45)] hover:-translate-y-px transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none mt-1">
           {loading ? (
             <span className="flex items-center justify-center gap-2">
               <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
